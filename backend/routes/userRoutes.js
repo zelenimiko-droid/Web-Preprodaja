@@ -92,4 +92,21 @@ router.put('/profile', async (req, res) => {
     }
 })
 
+// Svi korisnici (admin)
+router.get('/', async (req, res) => {
+    const users = await User.find({})
+    res.json(users)
+})
+
+// Brisanje korisnika (admin)
+router.delete('/:id', async (req, res) => {
+    const user = await User.findById(req.params.id)
+    if (user) {
+        await User.deleteOne({ _id: user._id })
+        res.json({ message: 'Korisnik obrisan' })
+    } else {
+        res.status(404).json({ message: 'Korisnik nije pronađen' })
+    }
+})
+
 export default router
