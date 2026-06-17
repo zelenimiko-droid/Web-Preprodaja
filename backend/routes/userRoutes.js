@@ -61,4 +61,35 @@ router.post('/login', async (req, res) => {
     }
 })
 
+// Ažuriranje profila
+router.put('/profile', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]
+    if (!token) return res.status(401).json({ message: 'Nije autorizovan' })
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findById(decoded.id)
+
+    if (user) {
+        user.name = req.body.name || user.name
+        user.email = req.body.email || user.email
+        if (req.body.password) {
+            const salt = await bcrypt.genSalt(10)
+            user.password = await bcrypt.hash(req.body.password, salt)
+        }
+        const updatedUser = await user.save()
+        const newToken = jwt.sign({ id: updatedUser._id }, process.env.JWT_SECRET, {
+            expiresIn: '30d',
+        })
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin,
+            token: newToken,
+        })
+    } else {
+        res.status(404).json({ message: 'Korisnik nije pronađen' })
+    }
+})
+
 export default router
